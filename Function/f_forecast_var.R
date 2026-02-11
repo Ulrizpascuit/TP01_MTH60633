@@ -17,8 +17,8 @@ f_forecast_var <- function(y, level) {
   #il n'y a que theta[1] qui doit etre strictement positif les autres peuvent être 0 
   LB     <- c(1e-5,0,0) 
   # Stationarity condition
-  A <- matrix(c(0, -1, -1), nrow = 1)
-  b <- -1 + 1e-5
+  A <- 
+  b <- 
   # Run the optimization
   fit <- optim(
   par    = theta0,
@@ -91,8 +91,7 @@ f_ht <- function(theta, y)  {
   # Compute conditional variance at each step
   #choc d'hier*coef de réaction + persistance*coef de mémoire
   for (t in 2:(T + 1)) {
-  sig2[t] <- a0 + a1 * y[t - 1]^2 + b1 * sig2[t - 1]
+  sig2[t] <- a0 + a1 * y[t-1]^2 + b1 * sig2[t-1]
   }
-  
   sig2
 }
