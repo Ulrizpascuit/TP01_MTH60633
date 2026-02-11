@@ -14,19 +14,25 @@ f_forecast_var <- function(y, level) {
   # Fit a GARCH(1,1) model with Normal errors
   # Starting values and bounds
   theta0 <- c(0.1 * var(y), 0.1, 0.8)
-  LB     <- ## !!! FIXME !!!
+  #il n'y a que theta[1] qui doit etre strictement positif les autres peuvent être 0 
+  LB     <- c(1e-5,0,0) 
   # Stationarity condition
-  A      <- ## !!! FIXME !!! 
-  b      <- ## !!! FIXME !!! 
-  
+  A <- matrix(c(0, -1, -1), nrow = 1)
+  b <- -1 + 1e-5
   # Run the optimization
-  ## !!! FIXME !!! 
-  
+  fit <- optim(
+  par    = theta0,
+  fn     = f_nll,
+  y      = y,
+  method = "L-BFGS-B",
+  lower  = LB
+  )
+  theta <- fit$par
   # Recompute the conditional variance
   sig2 <- ComputeHtGarch(theta, y)
   
   # Compute the next-day ahead VaR for the Normal model
-  VaR <- ## !!! FIXME !!! 
+  VaR <- -qnorm(1 - level) * sqrt(tail(sig2, 1)) 
   
   out <- list(VaR_Forecast = VaR, 
               ConditionalVariances = sig2, 
@@ -53,7 +59,7 @@ f_nll <- function(theta, y) {
   sig2 <- sig2[1:T]
   
   # Compute the loglikelihood
-  ll <- ## !!! FIXME !!! 
+  ll <- sum(dnorm(y, mean = 0, sd = sqrt(sig2), log = TRUE))
   
   # Output the negative value
   nll <- -ll
@@ -83,7 +89,10 @@ f_ht <- function(theta, y)  {
   sig2[1] <- a0 / (1 - a1 - b1)
   
   # Compute conditional variance at each step
-  ### !!! FIXME !!!
+  #choc d'hier*coef de réaction + persistance*coef de mémoire
+  for (t in 2:(T + 1)) {
+  sig2[t] <- a0 + a1 * y[t - 1]^2 + b1 * sig2[t - 1]
+  }
   
   sig2
 }
