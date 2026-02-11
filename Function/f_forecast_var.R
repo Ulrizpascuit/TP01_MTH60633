@@ -10,18 +10,18 @@ f_forecast_var <- function(y, level) {
   #   theta : [vector] GARCH parameters
   #  NOTE
   #   o the estimation is done by maximum likelihood
-  
+  eps <- 1e-8
   # Fit a GARCH(1,1) model with Normal errors
   # Starting values and bounds
   theta0 <- c(0.1 * var(y), 0.1, 0.8)
   LB     <- ## !!! FIXME !!!
   # Stationarity condition
-  A      <- ## !!! FIXME !!! 
-  b      <- ## !!! FIXME !!! 
+  A      <- matrix(c(1,0,0,0,1,0,0,0,1,0,-1,-1), 3, 4) 
+  b      <- c(eps,eps,eps,-(1-eps))
   
   # Run the optimization
   ## !!! FIXME !!! 
-  
+  constrOptim(theta0, f_nll, ui = A, ci = b, y = y, control = list(reltol = 1e-10))
   # Recompute the conditional variance
   sig2 <- ComputeHtGarch(theta, y)
   
@@ -53,7 +53,8 @@ f_nll <- function(theta, y) {
   sig2 <- sig2[1:T]
   
   # Compute the loglikelihood
-  ll <- ## !!! FIXME !!! 
+  ## !!! FIXME !!! 
+  ll <- sum(-1/2 * (log(2*pi) + log(sig2) + y**2/sig2))
   
   # Output the negative value
   nll <- -ll
@@ -84,6 +85,8 @@ f_ht <- function(theta, y)  {
   
   # Compute conditional variance at each step
   ### !!! FIXME !!!
-  
+  for (i in 2:T+1) {
+    sig2[i] <- a0 + a1 * y[i-1]^2 + b1 * sig2[i-1]
+  }
   sig2
 }
