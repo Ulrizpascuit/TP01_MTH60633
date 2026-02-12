@@ -11,22 +11,27 @@ f_forecast_var <- function(y, level) {
   #  NOTE
   #   o the estimation is done by maximum likelihood
   eps <- 1e-8
+  
+  y <- as.numeric(y)
+  y <- y[is.finite(y)]
+  
   # Fit a GARCH(1,1) model with Normal errors
   # Starting values and bounds
   theta0 <- c(0.1 * var(y), 0.1, 0.8)
   LB     <- ## !!! FIXME !!!
   # Stationarity condition
-  A      <- matrix(c(1,0,0,0,1,0,0,0,1,0,-1,-1), 3, 4) 
+  A      <- matrix(c(1,0,0,0,1,0,0,0,1,0,-1,-1), nrow = 4, byrow = TRUE) 
   b      <- c(eps,eps,eps,-(1-eps))
   
   # Run the optimization
   ## !!! FIXME !!! 
-  constrOptim(theta0, f_nll, ui = A, ci = b, y = y, control = list(reltol = 1e-10))
+  fit <- constrOptim(theta = theta0, f_nll, grad = NULL, ui = A, ci = b, y = y, control = list(reltol = 1e-10))
+  theta <- fit$par
   # Recompute the conditional variance
-  sig2 <- ComputeHtGarch(theta, y)
+  sig2 <- f_ht(theta, y)
   
   # Compute the next-day ahead VaR for the Normal model
-  VaR <- ## !!! FIXME !!! 
+  VaR <- qnorm(1-level) * sqrt(sig2)
   
   out <- list(VaR_Forecast = VaR, 
               ConditionalVariances = sig2, 
@@ -47,7 +52,7 @@ f_nll <- function(theta, y) {
   T <- length(y)
   
   # Compute the conditional variance of a GARCH(1,1) model
-  sig2 <- ComputeHtGarch(theta, y)
+  sig2 <- f_ht(theta, y)
   
   # Consider the T values
   sig2 <- sig2[1:T]
@@ -85,7 +90,7 @@ f_ht <- function(theta, y)  {
   
   # Compute conditional variance at each step
   ### !!! FIXME !!!
-  for (i in 2:T+1) {
+  for (i in 2:(T+1)) {
     sig2[i] <- a0 + a1 * y[i-1]^2 + b1 * sig2[i-1]
   }
   sig2
