@@ -15,17 +15,17 @@ f_forecast_var <- function(y, level) {
   # Starting values and bounds
   theta0 <- c(0.1 * var(y), 0.1, 0.8)
   #il n'y a que theta[1] qui doit etre strictement positif les autres peuvent être 0 
-  LB     <- c(1e-5,0,0) 
+  LB     <- c(1e-5,1e-5,1e-5) 
   # Stationarity condition
-  A <- 
-  b <- 
+  A <- matrix(c(1,0,0,0,1,0,0,0,1,0,-1,-1),nrow=4, byrow=TRUE) #matrice diag & contrainte theta[2] + theta [3] inf à 1-err
+  b <- c(LB[1],LB[2],LB[3],-(1-1e-5) 
   # Run the optimization
-  fit <- optim(
-  par    = theta0,
-  fn     = f_nll,
-  y      = y,
-  method = "L-BFGS-B",
-  lower  = LB
+  fit <- constrOptim(
+  theta = theta0,
+  f     = f_nll,
+  y     = y,
+  ui    = A,
+  ci    = b
   )
   theta <- fit$par
   # Recompute the conditional variance
