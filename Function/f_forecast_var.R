@@ -11,26 +11,33 @@ f_forecast_var <- function(y, level) {
   #  NOTE
   #   o the estimation is done by maximum likelihood
   
+  y <- as.numeric(y)
+  
   # Fit a GARCH(1,1) model with Normal errors
   # Starting values and bounds
   theta0 <- c(0.1 * var(y), 0.1, 0.8)
-  LB     <- ## !!! FIXME !!!
-  # Stationarity condition
-  A      <- ## !!! FIXME !!! 
-  b      <- ## !!! FIXME !!! 
-  
-  # Run the optimization
-  ## !!! FIXME !!! 
-  
-  # Recompute the conditional variance
-  sig2 <- ComputeHtGarch(theta, y)
+  LB     <- c(1e-5, 1e-5, 1e-5)
+    # Stationarity condition
+    A      <- ## !!! FIXME !!!  
+    b      <- ## !!! FIXME !!!  
+    
+    # Run the optimization
+    opt <- constrOptim(theta = theta0, 
+                       f = f_nll, 
+                       ui = A,
+                       ci = b,
+                       y = y)
+    theta <- opt$par
+    
+    # Recompute the conditional variance
+    sig2 <- f_ht(theta, y)
   
   # Compute the next-day ahead VaR for the Normal model
-  VaR <- ## !!! FIXME !!! 
-  
-  out <- list(VaR_Forecast = VaR, 
-              ConditionalVariances = sig2, 
-              GARCH_param = theta)
+  VaR <- qnorm(1 - level)  * sqrt(tail(sig2, 1)))
+    
+    out <- list(VaR_Forecast = VaR, 
+                ConditionalVariances = sig2, 
+                GARCH_param = theta)
   
   out
 }
@@ -47,16 +54,16 @@ f_nll <- function(theta, y) {
   T <- length(y)
   
   # Compute the conditional variance of a GARCH(1,1) model
-  sig2 <- ComputeHtGarch(theta, y)
+  sig2 <- f_ht(theta, y)
   
   # Consider the T values
   sig2 <- sig2[1:T]
   
   # Compute the loglikelihood
-  ll <- ## !!! FIXME !!! 
-  
-  # Output the negative value
-  nll <- -ll
+  ll <- sum(dnorm(y, mean = 0, sd = sqrt(sig2), log = TRUE))
+    
+    # Output the negative value
+    nll <- -ll
   
   nll
 }
@@ -83,7 +90,9 @@ f_ht <- function(theta, y)  {
   sig2[1] <- a0 / (1 - a1 - b1)
   
   # Compute conditional variance at each step
-  ### !!! FIXME !!!
+  for (t in 2:(T+1)) {
+    sig2[t] <- a0 + a1 * y[t-1]^2 + b1 * sig2[t-1]
+  }
   
   sig2
 }
