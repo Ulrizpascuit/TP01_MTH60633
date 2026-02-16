@@ -1,4 +1,3 @@
-
 f_forecast_var <- function(y, level) {
   ### Compute the VaR forecast of a GARCH(1,1) model with Normal errors at the desired risk level
   #  INPUTS
@@ -15,21 +14,22 @@ f_forecast_var <- function(y, level) {
   # Starting values and bounds
   theta0 <- c(0.1 * var(y), 0.1, 0.8)
   #il n'y a que theta[1] qui doit etre strictement positif les autres peuvent être 0 
-  LB     <- c(1e-5,1e-5,1e-5) 
+  LB     <- c(1e-8,1e-8,1e-8) 
   # Stationarity condition
   A <- matrix(c(1,0,0,0,1,0,0,0,1,0,-1,-1),nrow=4, byrow=TRUE) #matrice diag & contrainte theta[2] + theta [3] inf à 1-err
-  b <- c(LB[1],LB[2],LB[3],-(1-1e-5) 
+  b <- c(LB[1],LB[2],LB[3],-(1-1e-5))
   # Run the optimization
   fit <- constrOptim(
   theta = theta0,
   f     = f_nll,
   y     = y,
   ui    = A,
-  ci    = b
+  ci    = b, 
+  grad  = NULL
   )
   theta <- fit$par
   # Recompute the conditional variance
-  sig2 <- ComputeHtGarch(theta, y)
+  sig2 <- f_ht(theta, y)
   
   # Compute the next-day ahead VaR for the Normal model
   VaR <- -qnorm(1 - level) * sqrt(tail(sig2, 1)) 
@@ -53,7 +53,7 @@ f_nll <- function(theta, y) {
   T <- length(y)
   
   # Compute the conditional variance of a GARCH(1,1) model
-  sig2 <- ComputeHtGarch(theta, y)
+  sig2 <- f_ht(theta, y)
   
   # Consider the T values
   sig2 <- sig2[1:T]
