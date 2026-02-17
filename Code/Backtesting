@@ -36,7 +36,7 @@ for (i in 1:n_forecasts) {
   if (i %% 100 == 0) {
     cat("Backtesting progress: ", i, " out of ", n_forecasts, "\n")
   }
-
+}
 
 # png (file = "VaR_Backtest_Plots")
 par(mfrow = c(2, 1))
