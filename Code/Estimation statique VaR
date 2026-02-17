@@ -8,16 +8,16 @@ y_ftse100_static <- log_rets_ftse100[1:T_estimation]
 
 # VaR forecast pour chaque indice au niveau de risque de 95%
 estimation_var_sp500_95 <- f_forecast_var(y = y_sp500_static,
-                                level = 0.95)
+                                          level = 0.95)
 estimation_var_ftse_95 <- f_forecast_var(y = y_ftse100_static,
-                                  level = 0.95)
+                                         level = 0.95)
 
 var_sp500_val <- estimation_var_sp500_95$VaR
 var_ftse_val <- estimation_var_ftse_95$VaR
 
 # Comparaison des valeurs estimées de VaR à T + 1
-if var_sp500_val > var_ftse_val:
-    print("Le FTSE100 est plus risqué à l'horizon T+1")
-else : 
-    print("Le SP500 est plus risqué à l'horizon T+1")
-
+if (var_sp500_val > var_ftse_val) {
+  print("Le FTSE100 est plus risqué à l'horizon T+1")
+} else {
+  print("Le SP500 est plus risqué à l'horizon T+1")
+}
