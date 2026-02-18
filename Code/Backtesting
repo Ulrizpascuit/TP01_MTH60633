@@ -2,73 +2,38 @@
 
 T_window <- 1000
 level <- 0.95
-n_forecast <- 5
+n_backtest <- 1000
 
-# Preallocation de la memoire
-VaR_sp500_forecast <- numeric(n_forecast)
-VaR_ftse100_forecast <- numeric(n_forecast)
+VaR_results <- list(sp500 = numeric(n_backtest), 
+                    ftse100 = numeric(n_backtest))
 
-actual_sp500 <- numeric(n_forecast)
-actual_ftse100 <- numeric(n_forecast)
 
 # Boucle pour backtester
-for (i in 1:n_forecast) {
+for (i in 1:n_backtest) {
   # Sélection des données pour la fenêtre de backtesting
-  index_start <- i
-  index_end <- i + T_window - 1
+  y_subset_sp500 <- log_rets_sp500[i:(i + T_window - 1)]
+  y_subset_ftse100 <- log_rets_ftse100[i:(i + T_window - 1)]
   
-  #Extraction des donnees
-  y_subset_sp500 <- as.numeric(log_rets_sp500[index_start:index_end])
-  y_subset_ftse100 <- as.numeric(log_rets_ftse100[index_start:index_end])
+  VaR_results$sp500[i] <- f_forecast_var(y = y_subset_sp500, level = level)$VaR
+  VaR_results$ftse100[i] <- f_forecast_var(y = y_subset_ftse100, level = level)$VaR
   
-  # Estimation VaR pour le jour end_index + 1
-  estim_sp500 <- f_forecast_var(y = y_subset_sp500, level = level)
-  estim_ftse100 <- f_forecast_var(y = y_subset_ftse100, level = level)
-  
-  VaR_sp500_forecast[i] <- estim_sp500$VaR
-  VaR_ftse100_forecast[i] <- estim_ftse100$VaR
-  
-  # Valeurs réelles de comparaison pour le jour end_index + 1
-  actual_sp500[i] <- as.numeric(log_rets_sp500[index_end + 1])
-  actual_ftse100[i] <- as.numeric(log_rets_ftse100[index_end + 1])
-  
-  # comment faire avancer la fenetre de backtesting?? (auto-genere jsp si bon)
   if (i %% 100 == 0) {
-    cat("Backtesting progress: ", i, " out of ", n_forecast, "\n")
+    cat("Backtesting progress: ", i, " out of ", n_backtest, "\n")
   }
 }
+  
 
 # png (file = "VaR_Backtest_Plots")
 par(mfrow = c(2, 1))
 
 # Plot pour sp500
-plot(actual_sp500, 
-     type = "l", 
-     col = "blue", 
-     main = "Backtesting VaR 95% - S&P 500 (GARCH(1,1)", 
-     xlab = "Jours de prevision", 
-     ylab = "Log-rendements")
-
-lines(VaR_sp500_forecast, col = "red", lty = 2, lwd = 2)
-
-legend("topright", 
-       legend = c("Rendements Réels", "VaR 95% Forecast"), 
-       col = c("blue", "red"), 
-       lty = c(1, 2), 
-       lwd = c(1, 2))
+realized_sp500 <- as.numeric(log_rets_sp500[(T_window + 1):(T_window + n_backtest)])
+plot(realized_sp500, type = "l", col = "blue", main = "Backtest SP500", ylab = "Log-rets", xlab = "Time")
+lines(VaR_results$sp500, col = "red", lwd = 2, lty = 2)
 
 # Plot pour ftse100
-plot(actual_ftse100, 
-     type = "l", 
-     col = "blue", 
-     main = "Backtesting VaR 95% - FTSE 100 (GARCH(1,1)", 
-     xlab = "Jours de prevision", 
-     ylab = "Log-rendements")
+realized_ftse100 <- as.numeric(log_rets_ftse100[(T_window + 1):(T_window + n_backtest)])
+plot(realized_ftse100, type = "l", col = "blue", main = "Backtest FTSE100", ylab = "Log-rets", xlab = "Time")
+lines(VaR_results$ftse100, col = "red", lwd = 2, lty = 2)
 
-lines(VaR_ftse100_forecast, col = "red", lty = 2, lwd = 2)
-legend("topright", 
-       legend = c("Rendements Réels", "VaR 95% Forecast"), 
-       col = c("blue", "red"), 
-       lty = c(1, 2), 
-       lwd = c(1, 2))
 # dev.off()
