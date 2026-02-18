@@ -18,8 +18,8 @@ f_forecast_var <- function(y, level) {
   theta0 <- c(0.1 * var(y), 0.1, 0.8)
   LB     <- c(1e-5, 1e-5, 1e-5)
     # Stationarity condition
-    A      <- ## !!! FIXME !!!  
-    b      <- ## !!! FIXME !!!  
+    A      <- matrix(c(1,0,0,0,1,0,0,0,1,0,-1,-1),nrow=4, byrow=TRUE)
+    b      <- c(LB[1],LB[2],LB[3],-(1-1e-5))
     
     # Run the optimization
     opt <- constrOptim(theta = theta0, 
