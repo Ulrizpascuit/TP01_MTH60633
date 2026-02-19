@@ -1,9 +1,9 @@
 ---
 title: "Devoir 1 - Méthodes Statistiques"
 author: |
-  "Guillaume Pecoraro 11301836"
+  "XXX"
 date: |
-  Fall/Automne 2026
+  Hiver 2026
 output:
   pdf_document:
     number_sections: false
@@ -36,6 +36,7 @@ logr_SPX <- logr_SPX[!is.na(logr_SPX)]
 logr_UKX <- logr_UKX[!is.na(logr_UKX)]
 ```
 ## Explications des fonctions
+
 ### Q2 
 ```{r}
 f_forecast_var <- function(y, level) {
@@ -184,7 +185,7 @@ dates_trim  <- dates[T:(T+T-1)]
 # Plot des 4 séries
 par(mfrow = c(2, 1), mar = c(4, 4, 3, 2))
 
-# Forecast des VaR
+# Graph SP500
 matplot(dates_trim,
         cbind(logr_SPX_num[T:(T+T-1)],VaRSPX),
         type = "l",
@@ -194,10 +195,9 @@ matplot(dates_trim,
         xlab = "",
         main = "VaR forecasts")
 
-legend("topright", legend = c("SP500", "FTSE100"),
+legend("topright", legend = c("rendements réalisés", "VaR forecast"),
        col = c("black", "red"), lty = 1, lwd = 1, bty = "n")
-
-# Rendements réalisés normalisés à 1
+# Graph FTSE 100
 matplot(dates_trim,
         cbind(logr_UKX_num[T:(T+T-1)], VaRUKX),
         type = "l",
@@ -207,8 +207,9 @@ matplot(dates_trim,
         xlab = "Date",
         main = "Rendements réalisés")
 
-legend("bottomright", legend = c("SP500", "FTSE100"),
+legend("bottomright", legend = c("rendements réalisés", "VaR forecast"),
        col = c("black", "red"), lty = 1, lwd = 1, bty = "n")
 
 par(mfrow = c(1, 1))
 ```
+
