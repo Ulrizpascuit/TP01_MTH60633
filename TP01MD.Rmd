@@ -36,10 +36,16 @@ logr_SPX <- logr_SPX[!is.na(logr_SPX)]
 logr_UKX <- logr_UKX[!is.na(logr_UKX)]
 ```
 ## Explications des fonctions
-Pour construire le forecast via un modèle GARCH(1,1), on calcule d’abord la variance conditionnelle avec la fonction f_ht. Ensuite, les paramètres du modèle (d,a,b), stockés dans le vecteur theta, sont estimés par maximum de vraisemblance. f_nll fournit la négative log-vraisemblance qui sera minimisée pour les paramètres qui optimisent le modèle.
+Pour construire le forecast via un modèle GARCH(1,1), on calcule d’abord la variance conditionnelle avec la fonction f_ht. 
+Ensuite, les paramètres du modèle (d,a,b), stockés dans le vecteur theta, sont estimés par maximum de vraisemblance. 
+f_nll fournit la négative log-vraisemblance qui sera minimisée pour les paramètres qui optimisent le modèle.
 La fonction f_forecast_var combine ces deux étapes. Elle repose sur la dynamique GARCH(1,1) suivant :var(t)= d + a*ε(t−1)^2 + b*var(t−1).
-Ce modèle impose des contraintes d,a,b ≥ 0 donc on impose une borne 1e−8 (plutôt que 0) pour éviter les cas limites qui peuvent rendre l’optimisation instable. On impose aussi la stationnarité, via a+b < 1−ε, nécessaire pour que la variance reste finie et que la récurrence soit stable. Ces contraintes sont imposées dans A et b, puis passées au solveur lors de l’estimation.
-Une fois les paramètres estimés, on recalcule la suite des variances conditionnelles dans f_ht ; l’initialisation se fait avec la variance inconditionnelle d/(1−a−b). Enfin, la VaR correspond au quantile inférieur de la distribution conditionnelle, ici distribuée normalement grace au maximum de vraisemblance. On extrait donc le quantile visé, ici les 5% les plus bas (VaR 95%).
+Ce modèle impose des contraintes d,a,b ≥ 0 donc on impose une borne 1e−8 (plutôt que 0) pour éviter les cas limites qui peuvent rendre l’optimisation instable. 
+On impose aussi la stationnarité, via a+b < 1−ε, nécessaire pour que la variance reste finie et que la récurrence soit stable. 
+Ces contraintes sont imposées dans A et b, puis passées au solveur lors de l’estimation.
+Une fois les paramètres estimés, on recalcule la suite des variances conditionnelles dans f_ht ; l’initialisation se fait avec la variance inconditionnelle d/(1−a−b).
+Enfin, la VaR correspond au quantile inférieur de la distribution conditionnelle, ici distribuée normalement grace au maximum de vraisemblance. 
+On extrait donc le quantile visé, ici les 5% les plus bas (VaR 95%).
 
 ### Q2 
 ```{r}
@@ -215,5 +221,6 @@ legend("bottomright", legend = c("rendements réalisés", "VaR forecast"),
 
 par(mfrow = c(1, 1))
 ```
+
 
 
