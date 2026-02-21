@@ -156,8 +156,7 @@ f_ht <- function(theta, y)  {
 Nous pouvons maintenant utiliser la fonction f_forecast_var pour faire une première estimation statique de la VaR des deux indices.
 On isole une fenêtre d'estimations qui correspond aux 1000 premiers jours de notre échantillon pour chacun des indices.
 On applique ensuite la fonction f_forecast_var pour modéliser leur volatilité respective selon un modèle GARCH(1,1) à un seuil de confiance de 95%.
-On extrait les résultats avec $VaR_Forecast. 
-On obtient l'estimation de la perte journalière maximale anticipée par notre modèle pour chaque indice.
+On extrait les résultats avec $VaR_Forecast, ce qui nous permet d'obtenir l'estimation de la perte journalière maximale anticipée par notre modèle pour chaque indice.
 L'estimation statique de la VaR pour le S&P 500 est de 6.942% comparé à une VaR de 6.237% pour le FTSE 100. 
 Alors, l'anticipation de la perte pour le S&P 500 est plus grande. Ceci signifie que le S&P 500 est plus risqué à l'horizon d'investissement d'une journée au terme de cette période.
 
