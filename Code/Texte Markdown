@@ -22,7 +22,13 @@ knitr:
 
 ## Structure du Projet
 
-### Q1. 
+## Données 
+Nous préparons d'abord les séries temporelles qui serviront d'intrants à notre modèle GARCH(1,1).
+On débute en filtrant la base de données pour retenir uniquement les observations à partir du 1er janvier 2005.
+Puisque le modèle GARCH(1,1) s'applique sur des données stationnaires, on transforme les prix bruts des indices S&P 500 et FTSE 100 en rendements logarithmiques en calculant la différence première du logarithme naturel des prix.
+Ceci génère inévitablement une valeur manquante (NA) à la première ligne de la série. On retire ces valeurs NA avec la fonction !is.na().
+
+### Q1
 ```{r}
 library("xts")
 library("zoo")
