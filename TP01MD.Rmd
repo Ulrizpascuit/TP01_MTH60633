@@ -6,12 +6,13 @@ date: |
   Hiver 2026
 output:
   pdf_document:
-    number_sections: false
+    latex_engine: xelatex
 header-includes:
   - \usepackage{xcolor}
+  - \usepackage{fontspec}
   - \definecolor{matlabOrange}{RGB}{217,85,26}
   - \usepackage{titling}
-  - \pretitle{\begin{center}\color{matlabOrange}\Huge}  # title color & size
+  - \pretitle{\begin{center}\color{matlabOrange}\Huge}
   - \posttitle{\end{center}}
 knitr:
   fig.width: 6
@@ -19,25 +20,52 @@ knitr:
   fig.align: "center"  
 ---
 
+## Structure du projet
 
-## Structure du Projet
+Afin d’assurer la reproductibilité et une organisation claire du travail, le projet a été structuré en plusieurs dossiers fonctionnels.
 
-### Q1. 
-```{r}
-library("xts")
-library("zoo")
-#selection de la plage janvier 2005 à dernière data
-data_TP01 <- prices["2005-01-01/"]
-#rendement log pour chaque indice
-logr_SPX <- diff(log(data_TP01$SP500))
-logr_UKX <- diff(log(data_TP01$FTSE100))
-#suppression des NA (les première valeurs)
-logr_SPX <- logr_SPX[!is.na(logr_SPX)]
-logr_UKX <- logr_UKX[!is.na(logr_UKX)]
+La structure comprend quatre dossiers principaux. Le dossier Code contient les scripts exécutables du projet, notamment le script de traitement des données ainsi que le script principal (main) permettant de reproduire l’ensemble des résultats demandés dans le TP.
+
+Le dossier Data regroupe les données utilisées dans le projet. Il est divisé en deux sous-dossiers : raw, qui contient les données brutes originales, et clean, qui contient les données nettoyées et prêtes à être utilisées pour l’analyse.
+
+Le dossier Function contient les fichiers .R regroupant les fonctions utilisées dans le projet, par exemple les fonctions d’estimation GARCH, de calcul de la VaR et les fonctions utilitaires.
+
+Enfin, le dossier Output contient tous les résultats générés automatiquement par le code.
+
+Cette organisation permet une exécution automatisée et indépendante de la plateforme tout en facilitant la maintenance et la lisibilité du projet.
+
+### Illustration de la structure
+
+```{r,warning=FALSE}
+library(fs)
+dir_tree()
 ```
+
+### Travail collaboratif et gestion de version
+
+Afin de faciliter le travail en équipe et d’assurer le suivi des modifications, le projet est hébergé sur GitHub :
+
+<https://github.com/Ulrizpascuit/TP01_MTH60633.git>
+
+Sur ce répertoire, une branche distincte a été créée pour chaque coéquipier. Cette approche permet de travailler simultanément sans conflits et de récupérer facilement les mises à jour des autres membres.
+
+## Données
+
+```{r warning=FALSE, message=FALSE}
+library("here")
+source(here("Code", "data_processing.R"), echo = FALSE)
+```
+```{r echo=FALSE, fig.cap="Rendements vs VaR (95%)", out.width="90%"}
+knitr::include_graphics(here::here("Output", "rets_vs_VaR_95_two_series.png"))
+```
+
+
 ## Explications des fonctions
 
-### Q2 
+Pour construire le forecast via un modèle GARCH(1,1), on calcule d’abord la variance conditionnelle avec la fonction f_ht. Ensuite, les paramètres du modèle (d,a,b), stockés dans le vecteur theta, sont estimés par maximum de vraisemblance. f_nll fournit la négative log-vraisemblance qui sera minimisée pour les paramètres qui optimisent le modèle. La fonction f_forecast_var combine ces deux étapes. Elle repose sur la dynamique GARCH(1,1) suivant : $\sigma^2$ var(t)= d + a*ε(t−1)\^2 + b*var(t−1). Ce modèle impose des contraintes d,a,b ≥ 0 donc on impose une borne 1e−8 (plutôt que 0) pour éviter les cas limites qui peuvent rendre l’optimisation instable. On impose aussi la stationnarité, via a+b \< 1−ε, nécessaire pour que la variance reste finie et que la récurrence soit stable. Ces contraintes sont imposées dans A et b, puis passées au solveur lors de l’estimation. Une fois les paramètres estimés, on recalcule la suite des variances conditionnelles dans f_ht ; l’initialisation se fait avec la variance inconditionnelle d/(1−a−b). Enfin, la VaR correspond au quantile inférieur de la distribution conditionnelle, ici distribuée normalement grace au maximum de vraisemblance. On extrait donc le quantile visé, ici les 5% les plus bas (V
+
+### Q2
+
 ```{r}
 f_forecast_var <- function(y, level) {
   ### Compute the VaR forecast of a GARCH(1,1) model with Normal errors at the desired risk level
@@ -137,8 +165,10 @@ f_ht <- function(theta, y)  {
   sig2
 }
 ```
+
 ### Q3
-```{r}
+
+```         
 T <- 1000
 logr_SPX_trim <- as.numeric(logr_SPX[1:T])
 logr_UKX_trim <- as.numeric(logr_UKX[1:T])
@@ -150,10 +180,12 @@ res_SPX$VaR_Forecast
 res_UKX$VaR_Forecast
 #Plus grosse VaR pour le SPX à 6.942% contre 6.237% pour le UKX. 
 ```
+
 **Interpretation: La plus grosse VaR est celle du SPX à 6.94% contre 6.24% pour le UKX. Cela signifie que le SPX est plus risqué que le UKX.**
 
 ### Q4
-```{r}
+
+```         
 #conversion en as.numeric pour gagner de la performance 
 logr_SPX_num <- as.numeric(logr_SPX)
 logr_UKX_num <- as.numeric(logr_UKX)
@@ -175,8 +207,8 @@ for (i in 1:T) {
   yUKX <- logr_UKX_num[i:(i + T - 1)]
 
   # VaR à t+1
-  VaRSPX[i] <- f_forecast_var(ySPX, 0.95)$VaR_Forecast
-  VaRUKX[i] <- f_forecast_var(yUKX, 0.95)$VaR_Forecast
+  VaRSPX[i] <- f_forecast_var(ySPX, 0.05)$VaR_Forecast
+  VaRUKX[i] <- f_forecast_var(yUKX, 0.05)$VaR_Forecast
 }
 
 dates <- as.Date(index(logr_SPX))
@@ -212,4 +244,3 @@ legend("bottomright", legend = c("rendements réalisés", "VaR forecast"),
 
 par(mfrow = c(1, 1))
 ```
-
