@@ -2,23 +2,14 @@ library("here","zoo","xts","PerformanceAnalytics")
 source(here("Function", "f_forecast_var.R"))
 
 load(here("Data", "processed", "prices_processed.rda"))
-head(prices_processed)
-tail(prices_processed)
-plot(prices_processed)
 
-rets_ <- Return.calculate(prices= prices_processed,
+rets_ <- PerformanceAnalytics::Return.calculate(prices= prices_processed,
                   method= "log")
-head(rets_)
 rets <- rets_[-1, ]
-
-head(rets)
-tail(rets)
-plot(rets)
 
 level <- 0.95
 var_fcst <- f_forecast_var(rets[,1], level)
-str(var_fcst)
-names(var_fcst)
+
 plot(var_fcst$VaR_Forecast, type="l", main="VaR Forecast (GARCH, 95%)")
 plot(var_fcst$ConditionalVariances, type="l", main="Conditional Variance (GARCH)")
 
@@ -41,7 +32,7 @@ window <- 1000
 h <- 1000
 level <- 0.95
 
-n_assets <- ncol(ret)
+n_assets <- ncol(rets)
 
 
 VaR_roll <- matrix(NA, nrow = h, ncol = n_assets)
@@ -50,7 +41,7 @@ for(j in 1:n_assets){
   
   for(k in 1:h){          
     
-    y_window <- ret[k:(window+k-1), j]
+    y_window <- rets[k:(window+k-1), j]
     
     out <- f_forecast_var(y_window, level)
     
@@ -58,9 +49,9 @@ for(j in 1:n_assets){
   }
 }
 
-colnames(VaR_roll) <- colnames(ret)
+colnames(VaR_roll) <- colnames(rets)
 
-dates_var <- index(ret)[(window+1):(window+h)]
+dates_var <- index(rets)[(window+1):(window+h)]
 
 VaR_roll_xts <- xts(VaR_roll, order.by = dates_var)
 

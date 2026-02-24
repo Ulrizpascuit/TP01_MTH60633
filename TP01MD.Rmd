@@ -36,9 +36,12 @@ Cette organisation permet une exécution automatisée et indépendante de la pla
 
 ### Illustration de la structure
 
-```{r,warning=FALSE}
+```{r, eval=FALSE}
 library(fs)
 dir_tree()
+```
+```{r, echo=FALSE, out.width="70%"}
+knitr::include_graphics("Output/structure_fichier.png")
 ```
 
 ### Travail collaboratif et gestion de version
@@ -50,13 +53,30 @@ Afin de faciliter le travail en équipe et d’assurer le suivi des modification
 Sur ce répertoire, une branche distincte a été créée pour chaque coéquipier. Cette approche permet de travailler simultanément sans conflits et de récupérer facilement les mises à jour des autres membres.
 
 ## Données
-
+### Filtrage des données
 ```{r warning=FALSE, message=FALSE}
 library("here")
 source(here("Code", "data_processing.R"), echo = FALSE)
 ```
-```{r echo=FALSE, fig.cap="Rendements vs VaR (95%)", out.width="90%"}
-knitr::include_graphics(here::here("Output", "rets_vs_VaR_95_two_series.png"))
+
+Premièrement, il a fallu charger le fichier `indices.rda` qui contient un objet, nommé `prices`, de type xts. Cet objet contient les prix journaliers du `SP500` et du `FTSE100` de l'année 1990 à 2013. Le code `data_processing.R` permet de garder seulement les valeurs depuis janvier 2005. Ces valeurs sont sauvegardées dans un autre fichier nommé `prices_processed.rda`. C'est ce fichier qui sera chargé pour le travail. La figure 1 présente les données filtrées qui seront utilisées pour le reste du TP.
+
+
+```{r echo=FALSE, fig.cap="(\\#fig:indices) Valeur des indices (SP500 et FTSE100) depuis janvier 2005"}
+plot.xts(prices_processed, legend.loc="topleft")
+```
+
+### Calcul des log-rendements
+
+Puisqu'on s'intéresse à faire de la prévision de risque sur les log-rendements des indices, il faut les calculer. La formule utilisée pour calculer les log-rendements est la suivante:
+
+$r_t = \ln\left(\frac{P_t}{P_{t-1}}\right)$
+
+En pratique, on utilise une fonction qui le calcul directement. La figure 2 présente les log-rendements des deux indices.
+
+```{r echo = FALSE, warning=FALSE, message=FALSE}
+library("here")
+source(here("Code", "main.R"), echo = FALSE)
 ```
 
 

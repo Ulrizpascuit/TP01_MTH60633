@@ -148,6 +148,7 @@ plot(VaR_roll_xts,
      legend.loc = "bottomleft")
 
 
+
 level <- 0.95
 p <- 1 - level
 r_real <- rets[,1][index(VaR_roll_xts)]  
@@ -160,30 +161,34 @@ phat
 dat <- merge(rets[, 1:2], VaR_roll_xts[, 1:2])
 
 
-png(filename = "rets_vs_VaR_95_two_series.png",
-    width = 1600, height = 900, res = 150)
+png(here("Output", "logRets_vs_VaR_95.png"), width = 800, height = 600)
 
 par(mfrow = c(2, 1), mar = c(4, 4, 3, 1))
+
+ret_cols <- c("steelblue", "darkorange") 
+var_col  <- "red3"                         
 
 for (j in 1:2) {
   ret_j <- dat[, j]      
   var_j <- dat[, j + 2]  
-  
   ylim_ <- range(c(ret_j, var_j), na.rm = TRUE)
   
   plot(index(dat), as.numeric(ret_j), type = "l",
+       col = ret_cols[j],
        main = paste0("Rendements réalisés et VaR 95% — ", colnames(rets)[j]),
        xlab = "Date", ylab = "Rendement / VaR",
        ylim = ylim_)
   
-  lines(index(dat), as.numeric(var_j), lwd = 2)
+  lines(index(dat), as.numeric(var_j),
+        col = var_col, lwd = 2)
   
   legend("topright",
          legend = c("Rendements réalisés", "VaR 95% (quantile gauche)"),
+         col = c(ret_cols[j], var_col),
          lwd = c(1, 2), bty = "n")
 }
 
-cat("PNG enregistré : rets_vs_VaR_95_two_series.png\n")
+dev.off()
 
 
 
@@ -270,7 +275,7 @@ rp_sim <- as.numeric(rets_sim %*% w)
 
 t1_date <- tail(index(H_roll_xts), 1)
 
-ylim_ <- range(c(rp_train_last10, rp_sim), na.rm = TRUE)
+ylim_ <- range(c(as.numeric(rp_train_last10), rp_sim), na.rm = TRUE)
 par(mfrow=c(1,1))
 plot(index(rp_train_last10), as.numeric(rp_train_last10),
      type = "b", pch = 16,
@@ -293,7 +298,7 @@ legend("topleft",
        bty = "n")
 
 par(mfrow=c(1,2), mar=c(4,4,3,1))
-plot(index(rp_last10), rp_last10,
+plot(index(rp_train_last10), rp_train_last10,
      type="l", lwd=2,
      main="Portefeuille 50/50\n10 derniers rendements",
      xlab="Date", ylab="Rendement")
