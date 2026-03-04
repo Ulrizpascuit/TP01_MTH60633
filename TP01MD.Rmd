@@ -31,7 +31,7 @@ library(PerformanceAnalytics)
 source(here("Code", "data_processing.R"), echo = FALSE)
 source(here("Function", "f_forecast_var.R"), echo = FALSE)
 knitr::read_chunk(here("Function","f_forecast_var.R"))
-#source(here("Code", "main.R"), echo = FALSE)
+source(here("Code", "main.R"), echo = FALSE)
 ```
 
 ## 1. Structure du projet
@@ -57,7 +57,7 @@ Sur ce répertoire, une branche distincte a été créée pour chaque coéquipie
 
 Premièrement, il a fallu charger le fichier `indices.rda` qui contient un objet, nommé `prices`, de type xts. Cet objet contient les prix journaliers du `SP500` et du `FTSE100` de l'année 1990 à 2013. Le code `data_processing.R` permet de garder seulement les valeurs depuis janvier 2005. Ces valeurs sont sauvegardées dans un autre fichier nommé `prices_processed.rda`. C'est ce fichier qui sera chargé pour le travail. La figure 1 présente les données filtrées qui seront utilisées pour le reste du TP.
 
-```{r echo=FALSE, fig.cap="Valeur des indices (SP500 et FTSE100) depuis janvier 2005",fig.width=6, fig.height=4, out.width="70%", fig.align="center"}
+```{r echo=FALSE, fig.cap="Valeur des indices (SP500 et FTSE100) depuis janvier 2005",fig.width=6, fig.height=4, out.width="80%", fig.align="center"}
 plot.xts(prices_processed, legend.loc="topleft")
 ```
 
@@ -69,20 +69,20 @@ $r_t = \ln\left(\frac{P_t}{P_{t-1}}\right)$
 
 En pratique, on utilise une fonction qui le calcul directement. La figure 2 présente les log-rendements des deux indices.
 
-```{r eval = FALSE, fig.cap="Valeur des indices (SP500 et FTSE100) depuis janvier 2005", fig.align="center"}
+```{r echo = FALSE, fig.cap="Valeur des indices (SP500 et FTSE100) depuis janvier 2005",fig.width=6, fig.height=7, out.width="90%", fig.align="center", fig.align="center"}
 par(mfrow = c(2, 1), mar = c(4, 4, 3, 1))
-plot(index(rets), coredata(rets)[,1],
+plot(index(logRets), logRets[,1],
      type = "l",
      col = "black",
      lwd = 2,
-     main = paste("Log-returns —", colnames(rets)[1]),
+     main = paste("Log-returns —", colnames(logRets)[1]),
      xlab = "Date",
      ylab = "Log-return")
-plot(index(rets), coredata(rets)[,2],
+plot(index(logRets), logRets[,2],
      type = "l",
      col = "red",
      lwd = 2,
-     main = paste("Log-returns —", colnames(rets)[2]),
+     main = paste("Log-returns —", colnames(logRets)[2]),
      xlab = "Date",
      ylab = "Log-return")
 ```
@@ -191,23 +191,20 @@ Le code suivant montre la fonction corrigée.
 
 ## 4. Estimation statique de la VaR
 
-À partir des fonctions corrigées de la section 3 et en fixant un niveau de risque, il est possible de calculer la VaR de 1 pas de temps dans le futur à partir de nos données en utilisant directement la fonction `f_forecast_var`.
-```         
-T <- 1000
-logr_SPX_trim <- as.numeric(logr_SPX[1:T])
-logr_UKX_trim <- as.numeric(logr_UKX[1:T])
+À partir des fonctions corrigées de la section 3 et en fixant un niveau de risque, il est maintenant possible d'utiliser la fonction `f_forecast_var` pour faire une première estimation statique de la VaR des deux indices. Pour se faire, on isole une fenêtre d'estimations qui correspond aux 1000 premiers jours de notre échantillon pour chacun des indices. On applique ensuite la fonction `f_forecast_var` pour modéliser leur volatilité respective selon un modèle GARCH(1,1) à un seuil de confiance de 95%. On extrait les résultats à partir de l'objet VaR de la liste de sortie fournie par la fonction, ce qui nous permet d'obtenir l'estimation de la perte journalière maximale anticipée par notre modèle pour chaque indice.
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+table_var <- data.frame(
+  Indice = c("SP500", "FTSE100"),
+  VaR_95 = c(var_sp500_val, var_ftse100_val)
+)
 
-res_SPX <- f_forecast_var(logr_SPX_trim, 0.95)
-res_UKX <- f_forecast_var(logr_UKX_trim, 0.95)
-
-res_SPX$VaR_Forecast
-res_UKX$VaR_Forecast
-#Plus grosse VaR pour le SPX à 6.942% contre 6.237% pour le UKX. 
+knitr::kable(table_var,
+             digits = 5,
+             caption = "Estimation statique de la VaR à 95% à l'horizon T+1")
 ```
+Au niveau de risque de 95%, la VaR estimée à l’horizon T+1 est négative puisqu’elle représente une perte (quantile gauche) des rendements. L’indice le plus risqué est celui dont la VaR est la plus faible (la plus négative). On peut voir à partir du tableau 1 que c'est le SP500 qui a la VaR la plus importantes (environ -6.9%) comparativement au FTSE100 (environ -6.2%). Étant donnée qu'on dit qu'on actif avec une plus grande variance est considéré comme plus risqué, alors on peut dire que qu'à l'horizon T+1, le SP500 est les plus risqué des deux indices.
 
-**Interpretation: La plus grosse VaR est celle du SPX à 6.94% contre 6.24% pour le UKX. Cela signifie que le SPX est plus risqué que le UKX.**
-
-### Q4
+## Backtesting
 
 ```         
 #conversion en as.numeric pour gagner de la performance 
