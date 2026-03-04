@@ -1,18 +1,58 @@
 library("here","zoo","xts","PerformanceAnalytics")
 source(here("Function", "f_forecast_var.R"))
 
+#Loader les data qui ont été filtrées
 load(here("Data", "processed", "prices_processed.rda"))
 
+#Calcul des log-rendements
 rets_ <- PerformanceAnalytics::Return.calculate(prices= prices_processed,
                   method= "log")
+#Enlever le NA en première position
 rets <- rets_[-1, ]
 
-level <- 0.95
-var_fcst <- f_forecast_var(rets[,1], level)
+#Sauvegarder figure des logRets pour SP500
+png(filename = here("Output", "logReturnSP500.png"),
+    width = 1600,
+    height = 900,
+    res = 150)
+plot(index(rets), coredata(rets)[,1],
+     type = "l",
+     col = "navy",
+     lwd = 2,
+     main = paste("Log-returns —", colnames(rets)[1]),
+     xlab = "Date",
+     ylab = "Log-return")
+dev.off()
 
-plot(var_fcst$VaR_Forecast, type="l", main="VaR Forecast (GARCH, 95%)")
-plot(var_fcst$ConditionalVariances, type="l", main="Conditional Variance (GARCH)")
+#Sauvegarder figure des logRets pour FTSE100
+png(filename = here("Output", "logReturnFTSE100.png"),
+    width = 1600,
+    height = 900,
+    res = 150)
+plot(index(rets), coredata(rets)[,2],
+     type = "l",
+     col = "navy",
+     lwd = 2,
+     main = paste("Log-returns —", colnames(rets)[2]),
+     xlab = "Date",
+     ylab = "Log-return")
+dev.off()
 
+
+#Isole les rendements des 1000 premieres journées
+T_estimation <- 1000
+
+y_sp500_static <- log_rets_sp500[1:T_estimation]
+y_ftse100_static <- log_rets_ftse100[1:T_estimation]
+
+# VaR forecast pour chaque indice au niveau de risque de 95%
+estimation_var_sp500_95 <- f_forecast_var(y = y_sp500_static,
+                                          level = 0.95)
+estimation_var_ftse_95 <- f_forecast_var(y = y_ftse100_static,
+                                         level = 0.95)
+
+var_sp500_val <- estimation_var_sp500_95$VaR # -0.049857
+var_ftse100_val <- estimation_var_ftse_95$VaR # -0.046695
 T <- 1000
 level <- 0.95
 
@@ -79,7 +119,7 @@ colnames(dat) <- c(paste0(colnames(rets)[1:2], "_ret"),
                    paste0(colnames(VaR_roll_xts)[1:2], "_VaR"))
 
 
-png(filename = "rets_vs_VaR_95_two_series.png",
+png(filename = "rets_vs_VaR_95.png",
     width = 1600, height = 900, res = 150)
 
 par(mfrow = c(2, 1), mar = c(4, 4, 3, 1))
@@ -104,6 +144,6 @@ for (j in 1:2) {
 
 dev.off()
 
-cat("PNG enregistré : rets_vs_VaR_95_two_series.png\n")
+#cat("PNG enregistré : rets_vs_VaR_95_two_series.png\n")
 
 
