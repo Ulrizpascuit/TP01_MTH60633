@@ -20,8 +20,6 @@ knitr:
   fig.align: "center"  
 ---
 
-#install.packages("fs") #install.packages("here") #install.packages("zoo") #install.packages("xts")
-
 ```{r setup, message=FALSE, warning=FALSE}
 library(fs)
 library(here)
@@ -39,15 +37,15 @@ knitr::read_chunk(here("Code","main.R"))
 
 ## 1. Structure du projet
 
-Afin d’assurer la reproductibilité et une organisation claire du travail, le projet a été structuré en plusieurs dossiers fonctionnels.La structure comprend quatre dossiers principaux. Le dossier Code contient les scripts exécutables du projet, notamment le script de traitement des données ainsi que le script principal (main) permettant de reproduire l’ensemble des résultats demandés dans le TP.Le dossier Data regroupe les données utilisées dans le projet. Il est divisé en deux sous-dossiers : raw, qui contient les données brutes originales, et clean, qui contient les données nettoyées et prêtes à être utilisées pour l’analyse.Le dossier Function contient les fichiers .R regroupant les fonctions utilisées dans le projet, par exemple les fonctions d’estimation GARCH, de calcul de la VaR et les fonctions utilitaires.Enfin, le dossier Output contient tous les résultats générés automatiquement par le code.Cette organisation permet une exécution automatisée et indépendante de la plateforme tout en facilitant la maintenance et la lisibilité du projet.
+Afin d’assurer la reproductibilité et une organisation claire du travail, le projet est structuré en plusieurs dossiers fonctionnels. Le dossier Code contient les scripts exécutables du projet, notamment le traitement des données et le script principal `main` permettant de reproduire l’ensemble des résultats. Le dossier Data regroupe les données utilisées et est divisé en deux sous-dossiers : raw pour les données brutes et clean pour les données nettoyées prêtes à l’analyse. Le dossier Function contient les fichiers `.R` regroupant les fonctions utilisées dans le projet, telles que les fonctions d’estimation GARCH et de calcul de la VaR. Enfin, le dossier Output rassemble les résultats générés automatiquement par le code. Cette organisation facilite la reproductibilité, la maintenance et la lisibilité du projet.
 
-### Illustration de la structure
+### 1.1 Illustration de la structure
 
 ```{r, echo=FALSE, out.width="80%", fig.align="center"}
 knitr::include_graphics("Output/structure_fichier.png")
 ```
 
-### Travail collaboratif et gestion de version
+### 1.2 Travail collaboratif et gestion de version
 
 Afin de faciliter le travail en équipe et d’assurer le suivi des modifications, le projet est hébergé sur GitHub :
 
@@ -61,7 +59,7 @@ Sur ce répertoire, une branche distincte a été créée pour chaque coéquipie
 
 Premièrement, il a fallu charger le fichier `indices.rda` qui contient un objet, nommé `prices`, de type xts. Cet objet contient les prix journaliers du `SP500` et du `FTSE100` de l'année 1990 à 2013. Le code `data_processing.R` permet de garder seulement les valeurs depuis janvier 2005. Ces valeurs sont sauvegardées dans un autre fichier nommé `prices_processed.rda`. C'est ce fichier qui sera chargé pour le travail. La figure 1 présente les données filtrées qui seront utilisées pour le reste du TP.
 
-```{r echo=FALSE, fig.cap="Valeur des indices (SP500 et FTSE100) depuis janvier 2005",fig.width=6, fig.height=4, out.width="80%", fig.align="center"}
+```{r echo=FALSE, fig.cap="Valeur des indices (SP500 et FTSE100) depuis janvier 2005",fig.width=6, fig.height=4, out.width="70%", fig.align="center"}
 plot.xts(prices_processed, legend.loc="topleft")
 ```
 
@@ -71,7 +69,7 @@ Puisqu'on s'intéresse à faire de la prévision de risque sur les log-rendement
 
 $r_t = \ln\left(\frac{P_t}{P_{t-1}}\right)$
 
-En pratique, on utilise une fonction qui le calcul directement. La figure 2 présente les log-rendements des deux indices.
+En pratique, on utilise une fonction qui le calcul directement. La figure 2 de la prochaine page présente les log-rendements des deux indices.
 
 ```{r echo = FALSE, fig.cap="Valeur des indices (SP500 et FTSE100) depuis janvier 2005",fig.width=6, fig.height=7, out.width="90%", fig.align="center", fig.align="center"}
 par(mfrow = c(2, 1), mar = c(4, 4, 3, 1))

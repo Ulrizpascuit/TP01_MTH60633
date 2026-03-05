@@ -60,6 +60,8 @@ window <- 1000
 h <- 1000
 level <- 0.95
 ## ---- verificationFichierVaR ----
+
+#
 file_var <- here("Output", "VaR_roll_xts.rda")
 if (file.exists(file_var)) {
   load(file_var)
@@ -77,9 +79,36 @@ if (file.exists(file_var)) {
   save(VaR_roll_xts, file = file_var)
 }
 ## ---- saveresultats ----
-plot(VaR_roll_xts,
-     main = "Rolling VaR 95% (1-step ahead)",
-     legend.loc = "bottomleft")
+
+# Rendements réalisés sur la période backtesting (1000 prochains jours)
+logRets_subset <- logRets[index(VaR_roll_xts)] 
+
+#Sauvegarder figure des séries de rendements réalisés et les estimations de la VaR
+png(filename = here("Output", "logRets_VS_VaR.png"),
+    width = 1600,
+    height = 900,
+    res = 150)
+par(mfrow = c(ncol(logRets), 1), mar = c(4, 4, 3, 6), xpd = TRUE)
+for (j in 1:ncol(logRets)) {
+  ylim_ <- range(c(logRets_subset[, j], VaR_roll_xts[, j]), na.rm = TRUE)
+  plot(index(logRets_subset), as.numeric(logRets_subset[, j]),
+       type = "l",
+       lwd = 2,                 
+       col = "black",
+       main = paste0("Rendements réalisés et VaR 95% — ", colnames(logRets)[j]),
+       xlab = "Date", ylab = "Rendement / VaR",
+       ylim = ylim_)
+  lines(index(VaR_roll_xts), as.numeric(VaR_roll_xts[, j]),
+        lwd = 3,                  
+        col = "red")
+  legend("topright",     
+         legend = c("Rendements réalisés", "VaR 95% (1-step ahead)"),
+         lwd = c(2, 3),
+         col = c("black", "red"),
+         bty = "n")
+}
+dev.off()
+par(mfrow = c(1, 1))
 
 
 # #Vérification de la VaR @ 95%
