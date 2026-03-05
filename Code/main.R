@@ -1,5 +1,6 @@
 library("here","zoo","xts","PerformanceAnalytics")
 source(here("Function", "f_forecast_var.R"))
+source(here("Function", "f_var_roll_wndw.R"))
 
 #Loader les data qui ont été filtrées
 load(here("Data", "processed", "prices_processed.rda"))
@@ -49,43 +50,37 @@ y_ftse100 <- logRets[1:T,2]
 estimation_var_sp500_95 <- f_forecast_var(y = y_sp500, level = 0.95)
 estimation_var_ftse_95 <- f_forecast_var(y = y_ftse100, level = 0.95)
 
-#Extraction de la VaR
+# Extraction de la VaR
 var_sp500_val <- estimation_var_sp500_95$VaR_Forecast # -0.0694
 var_ftse100_val <- estimation_var_ftse_95$VaR_Forecast  # -0.0624
 
 
 #----- BACKTESTING fenetre glissante de 1000 pour T=1000 -----
+window <- 1000
+h <- 1000
+level <- 0.95
+## ---- verificationFichierVaR ----
+file_var <- here("Output", "VaR_roll_xts.rda")
+if (file.exists(file_var)) {
+  load(file_var)
+  valid_object <- exists("VaR_roll_xts") && 
+                  nrow(VaR_roll_xts) > 0 &&
+                  all(colnames(VaR_roll_xts) == colnames(logRets))
+  if (!valid_object) {
+    message("Fichier invalide. Recalcul de la VaR rolling.")
+    VaR_roll_xts <- f_var_roll_wndw(logRets, window, h, level)
+    save(VaR_roll_xts, file = file_var)
+  }
+} else {
+  message("Fichier inexistant. Calcul de la VaR rolling.")
+  VaR_roll_xts <- f_var_roll_wndw(logRets, window, h, level)
+  save(VaR_roll_xts, file = file_var)
+}
+## ---- saveresultats ----
+plot(VaR_roll_xts,
+     main = "Rolling VaR 95% (1-step ahead)",
+     legend.loc = "bottomleft")
 
-# window <- 1000
-# h <- 1000
-# level <- 0.95
-# 
-# n_indices <- ncol(logRets)
-# 
-# 
-# VaR_roll <- matrix(NA, nrow = h, ncol = n_indices)
-# 
-# for(j in 1:n_indices){
-# 
-#   for(k in 1:h){
-# 
-#     y_window <- logRets[k:(window+k-1), j]
-# 
-#     out <- f_forecast_var(y_window, level)
-# 
-#     VaR_roll[k, j] <- tail(out$VaR_Forecast, 1)
-#   }
-# }
-# 
-# colnames(VaR_roll) <- colnames(logRets)
-# 
-# dates_var <- index(logRets)[(window+1):(window+h)]
-# 
-# VaR_roll_xts <- xts(VaR_roll, order.by = dates_var)
-# 
-# plot(VaR_roll_xts,
-#      main = "Rolling VaR 95% (1-step ahead)",
-#      legend.loc = "bottomleft")
 
 # #Vérification de la VaR @ 95%
 # level <- 0.95

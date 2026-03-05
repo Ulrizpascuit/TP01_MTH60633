@@ -30,8 +30,11 @@ library(xts)
 library(PerformanceAnalytics)
 source(here("Code", "data_processing.R"), echo = FALSE)
 source(here("Function", "f_forecast_var.R"), echo = FALSE)
-knitr::read_chunk(here("Function","f_forecast_var.R"))
+source(here("Function", "f_var_roll_wndw.R"), echo = FALSE)
 source(here("Code", "main.R"), echo = FALSE)
+knitr::read_chunk(here("Function","f_forecast_var.R"))
+knitr::read_chunk(here("Function","f_var_roll_wndw.R"))
+knitr::read_chunk(here("Code","main.R"))
 ```
 
 ## 1. Structure du projet
@@ -39,6 +42,7 @@ source(here("Code", "main.R"), echo = FALSE)
 Afin d’assurer la reproductibilité et une organisation claire du travail, le projet a été structuré en plusieurs dossiers fonctionnels.La structure comprend quatre dossiers principaux. Le dossier Code contient les scripts exécutables du projet, notamment le script de traitement des données ainsi que le script principal (main) permettant de reproduire l’ensemble des résultats demandés dans le TP.Le dossier Data regroupe les données utilisées dans le projet. Il est divisé en deux sous-dossiers : raw, qui contient les données brutes originales, et clean, qui contient les données nettoyées et prêtes à être utilisées pour l’analyse.Le dossier Function contient les fichiers .R regroupant les fonctions utilisées dans le projet, par exemple les fonctions d’estimation GARCH, de calcul de la VaR et les fonctions utilitaires.Enfin, le dossier Output contient tous les résultats générés automatiquement par le code.Cette organisation permet une exécution automatisée et indépendante de la plateforme tout en facilitant la maintenance et la lisibilité du projet.
 
 ### Illustration de la structure
+
 ```{r, echo=FALSE, out.width="80%", fig.align="center"}
 knitr::include_graphics("Output/structure_fichier.png")
 ```
@@ -94,46 +98,42 @@ On peut voir rapidement un comportement typique de log-rendement de séries fina
 Afin d'arriver à calculer la VaR next-step ahead du modèle GARCH(1,1) collé à nos données, le fichier de fonction nommé `f_forecast_var.R` a été utilisé. Ce fichier contient 3 fonctions dont `f_forecast_var` qui calcul directement la VaR à un pas de temps futur. Toutes les fonctions du fichiers ont été corrigées afin qu'elles fonctionnent comme elles se doivent.
 
 ### 3.1 Fonction `f_ht`
-Premièrement, on a la fonction `f_ht` qui calcule la variance inconditionnelle du modèle à chaque pas de temps. Cette fonction nécessite en entrée les paramètres du modèle GARCH(1,1) et le vecteur des log Return des indices. La correction de cette fonction était d'ajouter le calcul de la variacne conditionnelle. Au premier pas de temps, la variance conditionnelle est approximée par la variance inconditionnelle du modèle: 
-$$
+
+Premièrement, on a la fonction `f_ht` qui calcule la variance inconditionnelle du modèle à chaque pas de temps. Cette fonction nécessite en entrée les paramètres du modèle GARCH(1,1) et le vecteur des log Return des indices. La correction de cette fonction était d'ajouter le calcul de la variacne conditionnelle. Au premier pas de temps, la variance conditionnelle est approximée par la variance inconditionnelle du modèle: $$
 \sigma^2_1 = \frac{\omega}{1-\alpha-\beta}
 $$
 
-Par la suite, la variance conditionnelle est calculée par la formule du modèle GARCH(1,1): 
+Par la suite, la variance conditionnelle est calculée par la formule du modèle GARCH(1,1):
 
 $$
 \sigma^2_t = \omega + \alpha y^2_{t-1} + \beta \sigma^2_{t-1}
 $$
 
-Afin de calculer la variance à chaque pas de temps, une boucle sur tous les pas de temps a été utilisée. Le code suivant montre la fonction corrigée. 
+Afin de calculer la variance à chaque pas de temps, une boucle sur tous les pas de temps a été utilisée. Le code suivant montre la fonction corrigée.
+
 ```{r f_ht, echo=TRUE, eval=FALSE}
 ```
 
 ### 3.2 Fonction `f_nll`
-Deuxièmement, la fonction `f_nll` est utilisée pour calculer la log-vraisemblance d'un modèle. Cette fonction est très importante, car c'est minimisant la valeur retournée par celle-ci qu'on arrive à obtenir des paramêtres optimaux pour le modèle. Ici, on suppose que les données suivent une loi normale centrée en 0 avec une certaine variance. La log-vraisemblance des données est donc calculée en sommant la densité d'une loi normale centrée en 0 et avec une variance pour chaque pas de temps qui correspond à la variance conditionnelle calculée par la fonction `f_ht`. 
-On a donc $y_t \mid \mathcal{F}_{t-1} \sim \mathcal{N}(0,\sigma_t^2)$ où $\sigma_t^2$ est la variance conditionnelle produite par la fonction `f_ht`. La densité conditionnelle associée est donc :
+
+Deuxièmement, la fonction `f_nll` est utilisée pour calculer la log-vraisemblance d'un modèle. Cette fonction est très importante, car c'est minimisant la valeur retournée par celle-ci qu'on arrive à obtenir des paramêtres optimaux pour le modèle. Ici, on suppose que les données suivent une loi normale centrée en 0 avec une certaine variance. La log-vraisemblance des données est donc calculée en sommant la densité d'une loi normale centrée en 0 et avec une variance pour chaque pas de temps qui correspond à la variance conditionnelle calculée par la fonction `f_ht`. On a donc $y_t \mid \mathcal{F}_{t-1} \sim \mathcal{N}(0,\sigma_t^2)$ où $\sigma_t^2$ est la variance conditionnelle produite par la fonction `f_ht`. La densité conditionnelle associée est donc :
 
 $$
 f(y_t \mid \mathcal{F}_{t-1}) =\frac{1}{\sqrt{2\pi\sigma_t^2}} \exp\left(-\frac{y_t^2}{2\sigma_t^2}\right).
-$$
-La log-vraisemblance sur $t=1,\dots,T$ s'écrit alors :
+$$ La log-vraisemblance sur $t=1,\dots,T$ s'écrit alors :
 
 $$
 \ell(\theta)=\sum_{t=1}^{T}\left[-\frac{1}{2}\log(2\pi)-\frac{1}{2}\log(\sigma_t^2)-\frac{1}{2}\frac{y_t^2}{\sigma_t^2}\right]
-$$
-Le code suivant montre la fonction corrigée. 
+$$ Le code suivant montre la fonction corrigée.
 
 ```{r f_nll, echo=TRUE, eval=FALSE}
 ```
 
 ### 3.3 Fonction `f_forecast_var`
 
-Troisèmement, la fonction `f_forecast_var` est utilisée afin de calculer la prévision de la Value-at-Risk (VaR) à un pas de temps futur à partir d’un modèle GARCH(1,1) avec erreurs normales. Cette fonction nécessite en entrée le vecteur des log-returns des indices ainsi qu’un niveau de risque `level` (par exemple 0.95 pour une VaR au niveau de 95%). La première étape de cette fonction consiste à estimer les paramètres du modèle GARCH(1,1) par maximum de vraisemblance. Pour ce faire, la fonction f_nll définie précédemment est minimisée numériquement. La première correction apportée était la définition des contraintes du problème d’optimisation. Une borne inférieure sur les paramètres doit être définie afin de garantir que ceux-ci demeurent positifs et la condition de stationnarité du modèle GARCH(1,1) doit également être imposée. On se retrouve donc avec les contraintes suivantes: 
-$$
+Troisèmement, la fonction `f_forecast_var` est utilisée afin de calculer la prévision de la Value-at-Risk (VaR) à un pas de temps futur à partir d’un modèle GARCH(1,1) avec erreurs normales. Cette fonction nécessite en entrée le vecteur des log-returns des indices ainsi qu’un niveau de risque `level` (par exemple 0.95 pour une VaR au niveau de 95%). La première étape de cette fonction consiste à estimer les paramètres du modèle GARCH(1,1) par maximum de vraisemblance. Pour ce faire, la fonction f_nll définie précédemment est minimisée numériquement. La première correction apportée était la définition des contraintes du problème d’optimisation. Une borne inférieure sur les paramètres doit être définie afin de garantir que ceux-ci demeurent positifs et la condition de stationnarité du modèle GARCH(1,1) doit également être imposée. On se retrouve donc avec les contraintes suivantes: $$
 \omega > 0, \quad \alpha>0, \quad \beta>0,\quad \alpha + \beta <1
-$$
-Ces contraintes sont intégrées dans la fonction d’optimisation `constrOptim` (discuté plus loin) sous forme de contraintes linéaires. On doit donc les écrire sous la forme $A\theta \ge b$ où $\theta$ est le vecteur des paramètres ($\omega, \alpha, \beta$). Sous forme matricielle, on a donc: 
-$$
+$$ Ces contraintes sont intégrées dans la fonction d’optimisation `constrOptim` (discuté plus loin) sous forme de contraintes linéaires. On doit donc les écrire sous la forme $A\theta \ge b$ où $\theta$ est le vecteur des paramètres ($\omega, \alpha, \beta$). Sous forme matricielle, on a donc: $$
 A =
 \begin{pmatrix}
 1 & 0 & 0 \\
@@ -177,14 +177,12 @@ b =
 0 \\
 1
 \end{pmatrix}
-$$
-La deuxième correction a été de fournir le code pour l'optimisation du modèle. Ici, la méthode utilisée pour trouver les paramètres optimaux du modèle est de minimiser le négatif du log-vraisemblance. Pour ce faire, nous utilisons la fonction `constrOptim`, pour minimiser la valeur de sortie de la fonction `f_nll` présentée plus tôt. Les contraintes sont directement introduites dans les entrées de l'optimiseur et le vecteur $y$ des log-rendements est ajouté à la fin des entrées de l'optimiseur afin qu'il puisse l'utiliser comme entrée dans l'appel de `f_nll` (car  `f_nll` n'a pas que $\theta$ comme entrée).
+$$ La deuxième correction a été de fournir le code pour l'optimisation du modèle. Ici, la méthode utilisée pour trouver les paramètres optimaux du modèle est de minimiser le négatif du log-vraisemblance. Pour ce faire, nous utilisons la fonction `constrOptim`, pour minimiser la valeur de sortie de la fonction `f_nll` présentée plus tôt. Les contraintes sont directement introduites dans les entrées de l'optimiseur et le vecteur $y$ des log-rendements est ajouté à la fin des entrées de l'optimiseur afin qu'il puisse l'utiliser comme entrée dans l'appel de `f_nll` (car `f_nll` n'a pas que $\theta$ comme entrée).
 
-La troisième correction a été de calculer la VaR d<un pas de temps futur selon le niveau de tolérance `level`. Étant donnée qu'on suppose que $y_t$ suit une loi normale, alors on on peut obtenir la VaR en calculant le quantile d'une loi normale de variance $\sigma^2_{t+1}$ (variance conditionnelle estimée par le modèle) associée au `level` voulu.
+La troisième correction a été de calculer la VaR d\<un pas de temps futur selon le niveau de tolérance `level`. Étant donnée qu'on suppose que $y_t$ suit une loi normale, alors on on peut obtenir la VaR en calculant le quantile d'une loi normale de variance $\sigma^2_{t+1}$ (variance conditionnelle estimée par le modèle) associée au `level` voulu. 
 $$
 VaR_{t+1} \;=\; q_{1-\text{level}} \,\sqrt{\sigma_{t+1}^2}
-$$
-Le code suivant montre la fonction corrigée. 
+$$ Le code suivant montre la fonction corrigée.
 
 ```{r f_forecast_var, echo=TRUE, eval=FALSE}
 ```
@@ -192,6 +190,7 @@ Le code suivant montre la fonction corrigée.
 ## 4. Estimation statique de la VaR
 
 À partir des fonctions corrigées de la section 3 et en fixant un niveau de risque, il est maintenant possible d'utiliser la fonction `f_forecast_var` pour faire une première estimation statique de la VaR des deux indices. Pour se faire, on isole une fenêtre d'estimations qui correspond aux 1000 premiers jours de notre échantillon pour chacun des indices. On applique ensuite la fonction `f_forecast_var` pour modéliser leur volatilité respective selon un modèle GARCH(1,1) à un seuil de confiance de 95%. On extrait les résultats à partir de l'objet VaR de la liste de sortie fournie par la fonction, ce qui nous permet d'obtenir l'estimation de la perte journalière maximale anticipée par notre modèle pour chaque indice.
+
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 table_var <- data.frame(
   Indice = c("SP500", "FTSE100"),
@@ -202,66 +201,46 @@ knitr::kable(table_var,
              digits = 5,
              caption = "Estimation statique de la VaR à 95% à l'horizon T+1")
 ```
+
 Au niveau de risque de 95%, la VaR estimée à l’horizon T+1 est négative puisqu’elle représente une perte (quantile gauche) des rendements. L’indice le plus risqué est celui dont la VaR est la plus faible (la plus négative). On peut voir à partir du tableau 1 que c'est le SP500 qui a la VaR la plus importantes (environ -6.9%) comparativement au FTSE100 (environ -6.2%). Étant donnée qu'on dit qu'on actif avec une plus grande variance est considéré comme plus risqué, alors on peut dire que qu'à l'horizon T+1, le SP500 est les plus risqué des deux indices.
 
-## Backtesting
+## 5. Backtesting
 
-```         
-#conversion en as.numeric pour gagner de la performance 
-logr_SPX_num <- as.numeric(logr_SPX)
-logr_UKX_num <- as.numeric(logr_UKX)
-# Initialisation des vecteurs de VaR 
-VaRSPX <- rep(NA, T)
-VaRUKX <- rep(NA, T)
+### 5.1 Méthodologie et résultats
 
-#Création du vecteur de rendement réalisés
-# retSPX<- Return.calculate(prices = data_TP01$SP500, method = "discrete")[T:(T+T-1)]
-# retUKX<- Return.calculate(prices = data_TP01$FTSE100, method = "discrete")[T:(T+T-1)]
-# idxSPX <- cumprod(1+retSPX)
-# idxUKX <- cumprod(1+retUKX)
-
-# Boucle pour les 1000 prochains jours
-for (i in 1:T) {
-
-  # Fenêtre roulante
-  ySPX <- logr_SPX_num[i:(i + T - 1)]
-  yUKX <- logr_UKX_num[i:(i + T - 1)]
-
-  # VaR à t+1
-  VaRSPX[i] <- f_forecast_var(ySPX, 0.05)$VaR_Forecast
-  VaRUKX[i] <- f_forecast_var(yUKX, 0.05)$VaR_Forecast
-}
-
-dates <- as.Date(index(logr_SPX))
-dates_trim  <- dates[T:(T+T-1)]
-
-# Plot des 4 séries
-par(mfrow = c(2, 1), mar = c(4, 4, 3, 2))
-
-# Graph SP500
-matplot(dates_trim,
-        cbind(logr_SPX_num[T:(T+T-1)],VaRSPX),
-        type = "l",
-        col = c("black", "red"),
-        lty = 1, lwd = 1,
-        ylab = "VaR Forecast",
-        xlab = "",
-        main = "VaR forecasts")
-
-legend("topright", legend = c("rendements réalisés", "VaR forecast"),
-       col = c("black", "red"), lty = 1, lwd = 1, bty = "n")
-# Graph FTSE 100
-matplot(dates_trim,
-        cbind(logr_UKX_num[T:(T+T-1)], VaRUKX),
-        type = "l",
-        col = c("black", "red"),
-        lty = 1, lwd = 1,
-        ylab = "Index (base = 1)",
-        xlab = "Date",
-        main = "Rendements réalisés")
-
-legend("bottomright", legend = c("rendements réalisés", "VaR forecast"),
-       col = c("black", "red"), lty = 1, lwd = 1, bty = "n")
-
-par(mfrow = c(1, 1))
+Afin d’évaluer la capacité prédictive du modèle GARCH(1,1), une procédure de backtesting est mise en place. L’objectif est de simuler une situation réelle dans laquelle la VaR est estimée uniquement à partir de l’information disponible au moment de la prévision.Pour ce faire, une fenêtre glissante de taille T=1000 observations est utilisée. À chaque itération, le modèle GARCH(1,1) est estimé à partir des 1000 rendements logarithmiques les plus récents disponibles.
+Plus précisément, pour chaque $t = 1001,\dots ,2000$, on considère la fenêtre de données:
+$$
+y_\text{window} = \{ y_{t-1000},\dots, y_{t-1}\}
+$$
+On a donc 1000 $y_\text{t-window}$ pour obtenir 1000 ensembles de paramètres optimaux pour ensuite calculer 1000 VaR à des pas de temps consécutifs. De manière plus formelles, on calcule:
+$$
+VaR_{t} \;=\; q_{0.05} \,\sqrt{\sigma_{t}^2}, \quad \sigma_{t}^2 \; \text{  obtenu du modèle estimé par  } \; y_\text{window} = \{ y_{t-1000},\dots, y_{t-1}\} \; \text{ avec } t = 1001,\dots ,2000
+$$
+L'implantation de cette méthode de backtesting a été fait à l'aide de deux boucle `for` imbriquées: la première sert a passer tous les indices dont on souhaite calculer les 1000 VaR et la deuxièment sert a passer les 1000 VaR à calculer. Une simple adaptation de la variable résultats d'une variable de type `double` à une variable de type `matrix` a été nécessaire comme changement pour bien afficher les résultats par la suite. Suite à des tests préliminaires, nous avons remarqué qu'il fallait plus d'une minutes pour calculer toutes les VaR. Afin d'accélérer la reproduction de résultats, l'objet contenant toutes les VaR a été sauvegardé dans un fichier .rda nommé `VaR_roll_xts.rda`. Ainsi, une condition a été ajouté dans le code afin de vérifier si le fichier existait déjà pour ne pas à recalculer à chaque fois. Le code qui suit présente la manière de vérifier:
+```{r verificationFichierVaR, echo=TRUE, eval=FALSE}
 ```
+Ici, on vérifie si le fichier.rda contient un objet dont les noms des colonnes sont les mêmes que les noms des colonnes des données que nous avons chargées. On regarde aussi si la longueur de l'objet est non nulle. Ces conditions ne sont pas très robustes, mais plus que suffisantes dans le cadre de ce travail.
+
+De plus, puisque l'ajout des conditions présentées précédemment, le code qui calcul toutes les VaR se retrouve dupliqués plusieurs fois. Ainsinous avons fait une fonction `f_var_roll_wndw` dans le fichier `f_var_roll_wndw.R` qui retourne directement toutes les VaR à calculer. La fonction est la suivante: 
+
+```{r f_var_roll_wndw, echo=TRUE, eval=FALSE}
+```
+### 5.2 Vérification et analyse des résultats
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
