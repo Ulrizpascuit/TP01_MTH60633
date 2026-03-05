@@ -135,4 +135,19 @@ viol_xts <- (r_real_xts < VaR_pred_xts)
 phat_sp500  <- mean(viol_xts[, 1], na.rm = TRUE)
 phat_ftse100 <- mean(viol_xts[, 2], na.rm = TRUE)
 
+# sauvegarde des données pertinentes du TP dans un seul fichier .rda
+backtest_results <- list(
+  level = level,
+  p_theorique = p,
+  prices_processed = prices_processed,
+  logRets,
+  VaR_roll_xts = VaR_roll_xts,
+  phat_sp500 = phat_sp500,
+  phat_ftse100 = phat_ftse100,
+  violations = viol_xts
+)
+
+# Sauvegarde dans le dossier Output
+save(backtest_results,
+     file = here("Output", "all_results.rda"))
 
