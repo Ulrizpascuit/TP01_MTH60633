@@ -1,4 +1,7 @@
-library("here","zoo","xts","PerformanceAnalytics")
+library("here")
+library("zoo")
+library("xts")
+library("PerformanceAnalytics")
 source(here("Function", "f_forecast_var.R"))
 source(here("Function", "f_var_roll_wndw.R"))
 
@@ -61,18 +64,22 @@ h <- 1000
 level <- 0.95
 ## ---- verificationFichierVaR ----
 
-#
+# Chemin vers le fichier VaR_roll_xts
 file_var <- here("Output", "VaR_roll_xts.rda")
+# Condition d'existence du fichier
 if (file.exists(file_var)) {
   load(file_var)
+  # Condition si le fichier est du bon format
   valid_object <- exists("VaR_roll_xts") && 
                   nrow(VaR_roll_xts) > 0 &&
                   all(colnames(VaR_roll_xts) == colnames(logRets))
+  # Si mauvais fichier, recalculer à partir de la fonction
   if (!valid_object) {
     message("Fichier invalide. Recalcul de la VaR rolling.")
     VaR_roll_xts <- f_var_roll_wndw(logRets, window, h, level)
     save(VaR_roll_xts, file = file_var)
   }
+  # Si fichier inexistant, recalculer à partir de la fonction
 } else {
   message("Fichier inexistant. Calcul de la VaR rolling.")
   VaR_roll_xts <- f_var_roll_wndw(logRets, window, h, level)
@@ -88,7 +95,7 @@ png(filename = here("Output", "logRets_VS_VaR.png"),
     width = 1600,
     height = 900,
     res = 150)
-par(mfrow = c(ncol(logRets), 1), mar = c(4, 4, 3, 6), xpd = TRUE)
+par(mfrow = c(ncol(logRets), 1), mar = c(4, 4, 3, 6))
 for (j in 1:ncol(logRets)) {
   ylim_ <- range(c(logRets_subset[, j], VaR_roll_xts[, j]), na.rm = TRUE)
   plot(index(logRets_subset), as.numeric(logRets_subset[, j]),
@@ -111,51 +118,21 @@ dev.off()
 par(mfrow = c(1, 1))
 
 
-# #Vérification de la VaR @ 95%
-# level <- 0.95
-# p <- 1 - level
-# r_real <- rets[,1][index(VaR_roll_xts)]
-# VaR_pred <- VaR_roll_xts
-# viol <- (r_real < VaR_pred)
-# phat <- mean(viol, na.rm=TRUE)
-# phat
-# 
-# 
-# stopifnot(ncol(rets) >= 2, ncol(VaR_roll_xts) >= 2)
-# 
-# dat <- merge(rets[, 1:2], VaR_roll_xts[, 1:2], join = "inner")
-# dat <- na.omit(dat)
-# 
-# 
-# colnames(dat) <- c(paste0(colnames(rets)[1:2], "_ret"),
-#                    paste0(colnames(VaR_roll_xts)[1:2], "_VaR"))
-# 
-# 
-# png(filename = "rets_vs_VaR_95.png",
-#     width = 1600, height = 900, res = 150)
-# 
-# par(mfrow = c(2, 1), mar = c(4, 4, 3, 1))
-# 
-# for (j in 1:2) {
-#   ret_j <- dat[, j]
-#   var_j <- dat[, j + 2]
-# 
-#   ylim_ <- range(c(ret_j, var_j), na.rm = TRUE)
-# 
-#   plot(index(dat), as.numeric(ret_j), type = "l",
-#        main = paste0("Rendements réalisés et VaR 95% — ", colnames(rets)[j]),
-#        xlab = "Date", ylab = "Rendement / VaR",
-#        ylim = ylim_)
-# 
-#   lines(index(dat), as.numeric(var_j), lwd = 2)
-# 
-#   legend("topright",
-#          legend = c("Rendements réalisés", "VaR 95% (quantile gauche)"),
-#          lwd = c(1, 2), bty = "n")
-# }
-# 
-# dev.off()
-# 
-# #cat("PNG enregistré : rets_vs_VaR_95_two_series.png\n")
-# 
-# 
+## ---- verificationVaR ----
+level <- 0.95
+p <- 1 - level
+
+# Rendements réalisés alignés sur les dates de VaR_roll_xts
+r_real_xts <- logRets[index(VaR_roll_xts), ]
+
+# VaR prédites
+VaR_pred_xts <- VaR_roll_xts
+
+# Violations : rendement réalisé < VaR prédite
+viol_xts <- (r_real_xts < VaR_pred_xts)
+
+# p-hat par indice
+phat_sp500  <- mean(viol_xts[, 1], na.rm = TRUE)
+phat_ftse100 <- mean(viol_xts[, 2], na.rm = TRUE)
+
+

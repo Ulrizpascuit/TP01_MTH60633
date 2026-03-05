@@ -195,9 +195,7 @@ table_var <- data.frame(
   VaR_95 = c(var_sp500_val, var_ftse100_val)
 )
 
-knitr::kable(table_var,
-             digits = 5,
-             caption = "Estimation statique de la VaR à 95% à l'horizon T+1")
+knitr::kable(table_var,digits = 5,caption = "Estimation statique de la VaR à 95% à l'horizon T+1")
 ```
 
 Au niveau de risque de 95%, la VaR estimée à l’horizon T+1 est négative puisqu’elle représente une perte (quantile gauche) des rendements. L’indice le plus risqué est celui dont la VaR est la plus faible (la plus négative). On peut voir à partir du tableau 1 que c'est le SP500 qui a la VaR la plus importantes (environ -6.9%) comparativement au FTSE100 (environ -6.2%). Étant donnée qu'on dit qu'on actif avec une plus grande variance est considéré comme plus risqué, alors on peut dire que qu'à l'horizon T+1, le SP500 est les plus risqué des deux indices.
@@ -224,10 +222,44 @@ De plus, puisque l'ajout des conditions présentées précédemment, le code qui
 
 ```{r f_var_roll_wndw, echo=TRUE, eval=FALSE}
 ```
+La figure suivante (figure 3) présente les résultats finaux. On y voit les log-rendements des deux indices ainsi que leur VaR respective.
+```{r echo = FALSE, fig.cap="Séries de rendements réalisés et estimations de la VaR pour les deux séries",fig.width=8, fig.height=7, out.width="90%", fig.align="center", fig.align="center"}
+par(mfrow = c(ncol(logRets), 1), mar = c(4, 4, 3, 6))
+for (j in 1:ncol(logRets)) {
+  ylim_ <- range(c(logRets_subset[, j], VaR_roll_xts[, j]), na.rm = TRUE)
+  plot(index(logRets_subset), as.numeric(logRets_subset[, j]),
+       type = "l",
+       lwd = 2,                 
+       col = "black",
+       main = paste0("Rendements réalisés et VaR 95% — ", colnames(logRets)[j]),
+       xlab = "Date", ylab = "Rendement / VaR",
+       ylim = ylim_)
+  lines(index(VaR_roll_xts), as.numeric(VaR_roll_xts[, j]),
+        lwd = 3,                  
+        col = "red")
+  legend("topright",     
+         legend = c("Rendements réalisés", "VaR 95% (1-step ahead)"),
+         lwd = c(2, 3),
+         col = c("black", "red"),
+         bty = "n")
+}
+```
+Visuellement, on peut dire que les VaR calculées ont l'air acceptable et cohérentes avec le movement des log-rendements. En effet, on observe que la VaR varie dans le temps en fonction de la volatilité conditionnelle estimée par le modèle GARCH(1,1). Lorsque les log-rendements présentent une plus grande variabilité, la variance conditionnelle augmente, ce qui se traduit par une VaR plus négative et donc par une perte potentielle plus importante. À l’inverse, durant les périodes de volatilité plus faible, la VaR se rapproche de zéro.
+Cette dynamique reflète la capacité du modèle GARCH à capturer les périodes d'augmentation ou diminution de volatilité ainsi que sa rapidité à s'ajuster lorsqu'un gros choc arrive.
+
 ### 5.2 Vérification et analyse des résultats
 
+Les résultats présentés à la figure 3 semblent bons, mais il n'est pas possible de dire si on trace réellement la VaR à 95%. Une manière rapide et simple de tester cela est de compter le nombre de fois que le log-rendement de chaque indice dépasse la VaR. Puisque le niveau est fixé à 95%, alors on devrait voir 5% du temps des log_rendements qui dépassent la VaR. Le tableau suivant montre le niveau de risque du modèle ainsi que le niveau de risque implicite (si on le calcule à partir du modèle collé aux données)
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+res_phat <- data.frame(
+  Serie = c(colnames(logRets)[1], colnames(logRets)[2]),
+  p_theorique = c(p, p),
+  p_hat = c(phat_sp500, phat_ftse100)
+)
 
-
+knitr::kable(res_phat, digits = 4, caption = "Backtesting VaR 95% : fréquence de violations observée")
+```
+On voit que l'occurence de dépassement de la VaR est proche de 5%, mais tout de même légèrement au dessus de 5%. Il est possible de dire qu'un échantillon de 1000 données n'est peut être pas assez grand et cela pourrait être la cause de ces deux valeurs supérieurs à la valeur théorique. Cependant, d'un point de vu financier, ce résultat est loin d'être étonnant. En effet, on parle souvent que le modèle normal appliqué à des rendements de séries n'est pas bon pour bien capter le comportement de valeurs extrêmes. Ici on s'intéresse aux gros rendements négatifs. Le modèle normal va nécessairement sous-estimer la probabilité d'occurence de ce genre d'évènement. C'est pourquoi qu'en pratique, on observe plus de log-rendements qui dépasse la VaR à 5% que prévu. On pourrait même discuter de l'asymmétrie (skewness) des données qui pourraient aussi avoir un impact, car le modèle normal est symmétrique. Cela étant dit, on voit que le GARCH(1,1) donne une bonne allure générale de la VaR estimée à un pas futur, mais c'est loin d'être le modèle le plus adéquat à utiliser.
 
 
 
