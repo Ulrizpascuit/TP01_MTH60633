@@ -83,6 +83,7 @@ f_ht <- function(theta, y)  {
   #   sig2  : [vector] (T+1 x 1) conditional variances
   
   # Extract the parameters
+  ## !!! FIXME !!! 
   a0 <- theta[1]
   a1 <- theta[2]
   b1 <- theta[3]

@@ -1,6 +1,6 @@
 # TP01 — Prévision de la Value-at-Risk avec un modèle GARCH
 
-Ce projet estime et évalue la Value-at-Risk (VaR) des indices SP500 et FTSE100 à l’aide d’un modèle GARCH(1,1) avec erreurs normales.  
+Ce projet estime et évalue la Value-at-Risk (VaR) des indices SP500 et FTSE100 à l’aide d’un modèle GARCH(1,1) avec erreurs normales.\
 L’objectif est de modéliser la volatilité conditionnelle des rendements financiers et de produire des prévisions de risque à un pas futur.
 
 ## Structure du projet
@@ -17,7 +17,7 @@ Output/ : figures et résultats générés automatiquement
 
 ## Méthodologie
 
-Les log-rendements sont calculés à partir des prix des indices.  
+Les log-rendements sont calculés à partir des prix des indices.\
 Un modèle GARCH(1,1) est estimé par maximum de vraisemblance sous l’hypothèse d’erreurs normales afin d’obtenir la variance conditionnelle.
 
 La VaR à 95% est calculée à partir du quantile de la distribution conditionnelle.

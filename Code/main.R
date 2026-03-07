@@ -140,7 +140,7 @@ backtest_results <- list(
   level = level,
   p_theorique = p,
   prices_processed = prices_processed,
-  logRets,
+  logRets = logRets,
   VaR_roll_xts = VaR_roll_xts,
   phat_sp500 = phat_sp500,
   phat_ftse100 = phat_ftse100,
